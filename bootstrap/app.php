@@ -13,6 +13,9 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware) {
         //
     })
+    ->withSchedule(function ($schedule) {
+        $schedule->command('app:timetable-notification')->weeklyOn(7, '8:00')->timezone('Europe/Tallinn');
+    })
     ->withExceptions(function (Exceptions $exceptions) {
         //
     })->create();

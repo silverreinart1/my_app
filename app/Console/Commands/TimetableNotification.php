@@ -2,48 +2,61 @@
 
 namespace App\Console\Commands;
 
-use Illuminate\Support\Facades\Mail;
-use Illuminate\Console\Command;
-use Illuminate\Support\Facades\Http;
-use Carbon\Carbon;
 use App\Mail\Timetable;
+use Illuminate\Console\Command;
+use Carbon\CarbonImmutable;
+
+
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Mail;
 
 class TimetableNotification extends Command
 {
+    /**
+     * The name and signature of the console command.
+     *
+     * @var string
+     */
     protected $signature = 'app:timetable-notification';
-    protected $description = 'Send timetable notifications for the current week';
 
+    /**
+     * The console command description.
+     *
+     * @var string
+     */
+    protected $description = 'Command description';
+
+    /**
+     * Execute the console command.
+     */
     public function handle()
-    {
-        $response = Http::get('https://tahvel.edu.ee/hois_back/timetableevents/timetableByGroup/36', [
-            'from' => now()->startOfWeek()->toIsoString(),
-            'lang' => 'ET',
-            'studentGroups' => 7596,
-            'thru' => now()->endOfWeek()->toIsoString(),
-        ]);
+{
+    //https://tahvel.edu.ee/hois_back/timetableevents/timetableByGroup/38?from=2023-10-30T00:00:00Z&studentGroups=5901&thru=2023-11-05T00:00:00Z
+    $response = Http::get('https://tahvel.edu.ee/hois_back/timetableevents/timetableByGroup/38', [
+        'from' => now()->startOfWeek()->toIsoString(),
+        'thru' => now()->endOfWeek()->toIsoString(),
+        'studentGroups' => '7596',
+    ]);
 
-        $data = collect($response->json()['timetableEvents'])->map(function ($entry) {
+    $data = collect($response->json()['timetableEvents'])
+        ->transform(function($entry){
             return [
-                'name' => data_get($entry, 'nameEt', ''),
-                'room' => data_get($entry, 'rooms.0.roomCode', ''),
-                'teacher' => data_get($entry, 'teachers.0.name', ''),
-                'date' => Carbon::parse(data_get($entry, 'date')),
-                'time_start' => data_get($entry, 'timeStart', ''),
-                'time_end' => data_get($entry, 'timeEnd', ''),
+                'name' => data_get($entry, 'nameEt'),
+                'date' => CarbonImmutable::parse(data_get($entry, 'date'))->format('Y-m-d'),
+                'room' => data_get($entry, 'rooms.0.roomCode'),
+                'teacher' => data_get($entry, 'teachers.0.name'),
+                'time_start' => data_get($entry, 'timeStart'),
+                'time_end' => data_get($entry, 'timeEnd'),
             ];
-        })->sortBy(['date', 'time_start'])
-          ->groupBy(function ($event) {
-              return $event['date']->translatedFormat('l');
-          });
+        })
+        ->sortBy(function($entry) {
+            return [$entry['date'], $entry['time_start']];
+        })
+        ->values();
 
-        $startDate = now()->startOfWeek();
-        $endDate = now()->endOfWeek();
+    //return $data;
+    Mail::to('test@test.ee')->send(new Timetable($data));
 
-        collect(['silverreinart01@gmail.com'])
-            ->each(function ($user) use ($data, $startDate, $endDate) {
-                Mail::to($user)->send(new Timetable($data, $startDate, $endDate));
-            });
-
-        $this->info('Timetable notifications sent!');
     }
+
 }

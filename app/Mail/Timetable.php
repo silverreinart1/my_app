@@ -2,48 +2,58 @@
 
 namespace App\Mail;
 
+use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
+use Illuminate\Mail\Mailables\Content;
+use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Collection;
-use Carbon\Carbon;
-use Illuminate\Bus\Queueable;
 
 class Timetable extends Mailable
 {
     use Queueable, SerializesModels;
 
-    // Declare public variables for the data passed in the constructor
-    public Collection $timetableEvents;
-    public Carbon $startDate;
-    public Carbon $endDate;
-
     /**
      * Create a new message instance.
-     *
-     * @param Collection $timetableEvents
-     * @param Carbon $startDate
-     * @param Carbon $endDate
-     * @return void
      */
-    public function __construct(Collection $timetableEvents, Carbon $startDate, Carbon $endDate)
+    public function __construct(
+        public Collection $data
+    )
     {
-        $this->timetableEvents = $timetableEvents;
-        $this->startDate = $startDate;
-        $this->endDate = $endDate;
+        //
     }
 
     /**
-     * Build the message.
-     *
-     * @return $this
+     * Get the message envelope.
      */
-    public function build()
+    public function envelope(): Envelope
     {
-        return $this->markdown('emails.timetable')
-                    ->with([
-                        'timetableEvents' => $this->timetableEvents,
-                        'startDate' => $this->startDate,
-                        'endDate' => $this->endDate,
-                    ]);
+        return new Envelope(
+            subject: 'Timetable',
+        );
+    }
+
+    /**
+     * Get the message content definition.
+     */
+    public function content(): Content
+    {
+        return new Content(
+            markdown: 'emails.timetable',
+            with: [
+                'data' => $this->data,
+            ]
+        );
+    }
+
+    /**
+     * Get the attachments for the message.
+     *
+     * @return array<int, \Illuminate\Mail\Mailables\Attachment>
+     */
+    public function attachments(): array
+    {
+        return [];
     }
 }

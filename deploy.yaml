@@ -1,0 +1,32 @@
+import: 
+  - recipe/laravel.php
+
+config:
+  repository: 'https://github.com/silverreinart1/my_app' #repo.git (!!SSH)
+  keep_releases: 2
+
+hosts:
+  stage:
+    hostname: 'tak23reinart.itmajakas.ee' # sinudomeen.itmajakas.ee
+    http_user: /data01/virt124163/domeenid/www.tak23reinart.itmajakas.ee/htdocs
+    remote_user: virt124163
+    deploy_path: '' # ~/domeenid/www.sinudomeen.itmajakas.ee/path-to-app
+
+tasks:
+
+  opcache:clear:
+    - run: killall php83-cgi || true
+
+  deploy:
+    - 'deploy:prepare'
+    - 'deploy:vendors'
+    - 'artisan:storage:link'
+    - 'artisan:optimize:clear'
+    - 'artisan:optimize'
+    - 'deploy:publish'
+
+after:
+  deploy:failed: deploy:unlock
+
+before:
+  deploy:success: opcache:clear

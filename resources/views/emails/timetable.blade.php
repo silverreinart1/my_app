@@ -1,22 +1,31 @@
-<!-- resources/views/emails/timetable.blade.php -->
-
 <x-mail::message>
-# Timetable for the Week
+    @php
+        $groupedData = $data->groupBy('date');
+    @endphp
 
-Start Date: {{ $startDate->format('l, d M Y') }}  
-End Date: {{ $endDate->format('l, d M Y') }}
-
-@foreach ($timetableEvents as $date => $events)
-    ## {{ $date }}
-
-    @foreach ($events as $event)
-        **{{ $event['name'] }}**<br>
-        Teacher: {{ $event['teacher'] }}<br>
-        Room: {{ $event['room'] }}<br>
-        Time: {{ $event['time_start'] }} - {{ $event['time_end'] }}<br><br>
+    @foreach($groupedData as $date => $entries)
+        <h2 class="date-header">{{ $date }}</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Room</th>
+                    <th>Teacher</th>
+                    <th>Start Time</th>
+                    <th>End Time</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach($entries as $entry)
+                    <tr>
+                        <td>{{ $entry['name'] }}</td>
+                        <td>{{ $entry['room'] }}</td>
+                        <td>{{ $entry['teacher'] }}</td>
+                        <td>{{ $entry['time_start'] }}</td>
+                        <td>{{ $entry['time_end'] }}</td>
+                    </tr>
+                @endforeach
+            </tbody>
+        </table>
     @endforeach
-@endforeach
-
-Thanks,  
-{{ config('app.name') }}
 </x-mail::message>

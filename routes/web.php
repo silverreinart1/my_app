@@ -1,17 +1,16 @@
 <?php
 
+use App\Mail\Timetable;
+use App\Console\Commands\TimetableNotification;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\TimetableController;
-
-Route::get('/timetable', [TimetableController::class, 'show']);
-
 
 Route::get('/', function () {
     return view('welcome');
 });
 
-Route::get('/available', function () {
-    return 'Available page content'; 
+Route::get('/mailable', function () {
+
+    $data = app(TimetableNotification::class)->handle();
+      
+    return new Timetable($data);
 });
-
-
